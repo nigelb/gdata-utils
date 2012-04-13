@@ -15,4 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import gdata
+import gdata.docs.client
+from   gdata.client import BadAuthentication
+
+
+def create_docs_client(ui, app_name, auth_tries=3, always_prompt_credentials=False):
+    client = gdata.docs.client.DocsClient(source=app_name)
+    client.ssl = True
+    bad_credential = always_prompt_credentials
+    for i in range(auth_tries):
+        user, password = ui.get_credentials(bad_credential=bad_credential, service="Google Docs")
+        try:
+            client.ClientLogin(user, password, source=app_name)
+        except BadAuthentication, e:
+            bad_credential = True
+            continue
+        return client
+    raise ("Failed authentication %s times."%auth_tries)
 
