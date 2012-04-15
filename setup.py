@@ -18,12 +18,12 @@
 
 from distutils.core import setup
 
-setup(name='SecretSanta',
+setup(name='gdata-utils',
       version='0.0.1',
       description='Helper utils for gdata',
       author='NigelB',
       author_email='nigel.blair+gdata-utils@gmail.com',
       url='http://github.com/nigelb/gdata-utils/',
       packages=["gdata_utils"],
-      requires=["simpleui"],
+      requires=["simpleui", ">=gdata-2.0.16"],
      )
