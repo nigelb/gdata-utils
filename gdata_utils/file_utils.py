@@ -20,25 +20,43 @@ from pprint import pprint
 import os
 
 
-class GoogleDocsConfig:
-    """A Config file stored in Google Docs"""
+class GoogleDocsConfigU(GoogleDocsConfigC):
+    """A Config file stored in Google Docs - creates the required DocsClient"""
 
-    def __init__(self, ui, service_name, file_title, mime_type="text/plain"):
+    def __init__(self, ui, service_name, file_title, mime_type="text/plain", folder=None):
         from gdata.docs.client import DocsClient
         self.service_name = service_name
-        self.client = DocsClient(source=service_name)
-        self.client.ssl = True
-        self.file_title = file_title
-        self.ui = ui
-        self.mime_type = mime_type
-        self.__authenticate()
-        self.__read()
+        client = DocsClient(source=service_name)
+        client.ssl = True
 
+        self.ui = ui
+        self.__authenticate(client)
+        GoogleDocsConfigC.__init__(self, client, service_name, file_title, mime_type=mime_type, folder=folder)
+        self.read()
+
+    def __authenticate(self, client):
+        from gdata.client import BadAuthentication
+        username, password = self.ui.get_credentials()
+        while True:
+            try:
+                client.ClientLogin(username, password, source=self.service_name)
+                break
+            except BadAuthentication, be:
+                username, password = self.ui.get_credentials(bad_credential=True)
+
+
+class GoogleDocsConfigC:
+    """A Config file stored in Google Docs - created with an existing DocsClient"""
+
+    def __init__(self, client, file_title, mime_type="text/plain", folder=None):
+        self.client = client
+        self.file_title = file_title
+        self.mime_type = mime_type
 
     def getClient(self):
         return self.client
 
-    def __read(self):
+    def read(self):
         import gdata.docs.client as client
         feed = self.client.GetDocList(
                 uri='%s?title=%s&title-exact=true&max-results=1' % (client.DOCLIST_FEED_URI, self.file_title))
@@ -70,18 +88,6 @@ class GoogleDocsConfig:
             self.config_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', entry=entry)
         else:
              self.config_entry = uploader.UpdateFile(self.config_entry.get_link("http://schemas.google.com/g/2005#resumable-edit-media").href, force=True)
-
-
-    def __authenticate(self):
-        from gdata.client import BadAuthentication
-        username, password = self.ui.get_credentials()
-        while True:
-            try:
-                self.client.ClientLogin(username, password, source=self.service_name)
-                break
-            except BadAuthentication, be:
-                username, password = self.ui.get_credentials(bad_credential=True)
-
 
     def get(self, key):
         return self.config[key]
