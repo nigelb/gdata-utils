@@ -95,6 +95,9 @@ class GD:
     def createDescriptor(self):
         return create_descriptor(self.entry)
 
+    def content_type(self):
+        return self.entry.content.type
+
 class Folder(GD):
     def __init__(self, fs, entry):
         self.fs = fs
