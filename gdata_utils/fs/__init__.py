@@ -14,9 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 from StringIO import StringIO
 import os
-import atom.core
 import gdata.media, gdata.client, gdata.docs.data
 from gdata_utils.fs.constants import *
 from simpleui.utils import UserConfig
@@ -38,50 +38,13 @@ class GoogleDocs:
         return [Folder(self, x) for x in folders.entry]
 
     def getFolder(self, descriptor, etag=None):
-        return Folder(self, self.client.get_doc(descriptor[id], etag=etag))
+        return Folder(self, self.client.GetResourceById(descriptor[id], etag=etag))
 
     def __cached_entry(self, id):
         return os.path.join(self.cache_dir, id)
 
-#    def get_list(self, url, eid=None):
-#        config = self.config
-#        ietag = None
-#
-#
-#        if config.has_key(url):
-#            ietag=config[url][etag]
-#        feed = self.__get_list(url,etag=ietag)
-#
-#        if not ietag:
-#            cache_entry = open(self.__cached_entry(config[url][file_name]), "r")
-#            data = cache_entry.read()
-#            cache_entry.close()
-#            name="clzz"
-#            into={}
-#            exec(config[url][desired_class]%name, into)
-#            return atom.core.parse(data,target_class=into[name])
-#        else:
-#
-#            id = eid
-#            if not eid:
-#                id=feed.id.text
-#                for cat in feed.category:
-#                    if cat.term == item_type:
-#                        id="root"
-#                    else:
-#                        pass
-#                print id
-#
-#            cache_entry = open(self.__cached_entry(id), "wb")
-#            cache_entry.write(feed.__str__())
-#            cache_entry.close()
-#        config[url] = {etag:feed.etag, id:feed.id.text, file_name:self.__cached_entry(id),
-#                       desired_class:"from %s import %s as %s"%(feed.__class__.__module__,feed.__class__.__name__,"%s")}
-#        config.write_config()
-#        return feed
-
     def get_list(self, url):
-        feed = self.client.GetDocList(uri=url)
+        feed = self.client.GetResources(uri=url)
         if not feed.entry:
             raise Exception
         if feed.GetNextLink():
@@ -92,38 +55,26 @@ class GoogleDocs:
         if self.config.has_key(id): self.config[id]
         return None
 
-    def open_cached_file(self, id, mode=None, buffering=None):
-        return open(self.__cached_entry(id), mode=mode, buffering=buffering)
+    def open_cached_file(self, id, **kwargs):
+        return open(self.__cached_entry(id), **kwargs)
 
     def download(self, id, extra_params=None):
         item_etag = None
         if self.config.has_key(id):
             item_etag = self.config[id][etag]
-        entry = self.client.GetDoc(id, item_etag)
-        self.client.Download(entry, self.__cached_entry(id), extra_params=extra_params)
+        entry = self.client.GetResourceById(id, etag=item_etag)
+        self.client.DownloadResource(entry, self.__cached_entry(id), extra_params=extra_params)
         self.config[id] = create_descriptor(entry)
         self.config.write_config()
 
     def create(self, title, folder_entry, mime_type="text/plain"):
-#        entry = self.client.create("file", title, folder_or_id=folder_or_id, writers_can_invite=writers_can_invite,
-#            auth_token=auth_token, uri=uri, **kwargs)
-        ms = gdata.data.MediaSource(file_handle=StringIO(), content_type="text/plain", content_length=0)
-        entry = self.client.Upload(ms, title, folder_or_uri=folder_entry)
-#        self.config[entry.resource_id.text] = create_descriptor(entry)
-#        self.config.write_config()
-#        return entry
-#        entry = gdata.docs.data.DocsEntry(title=atom.data.Title(text=title))
-#        entry.category.append(gdata.docs.data.make_kind_category('file'))
-        return entry
+        ms = gdata.data.MediaSource(file_handle=StringIO(" "), content_type=mime_type, content_length=1)
+        entry = gdata.docs.data.Resource(type='file', title=title)
+        return self.client.CreateResource(entry, media=ms, collection=folder_entry)
 
     def write(self, entry, stream, length, mime_type="text/plain"):
-#        entry = self.client.GetDoc(entry.resource_id.text)
-#        doc = gdata.docs.data.Resource(type='document', title='My Sample Doc')
-
-#        ms = gdata.data.MediaSource(file_handle=stream, content_type=mime_type, content_length=length)
-#        updated_entry = self.client.Update(entry, media_source=ms)
-        upl = gdata.client.ResumableUploader(self.client, stream, mime_type, length)
-        upl.update_file(entry, force=True)
+        ms = gdata.data.MediaSource(file_handle=stream, content_type=mime_type, content_length=length)
+        self.client.UpdateResource(entry, media=ms)
 
 
 def create_descriptor(entry):
@@ -169,9 +120,11 @@ class Folder(GD):
 
     def get_file(self, name):
         for itm in self.list():
-            print itm.title() ,name, itm.title() == name
             if itm.__class__ == File and itm.title() == name:
-                itm.download()
+                try:
+                    itm.download()
+                except gdata.client.NotModified, ne:
+                    pass
                 return itm
         return None
 
@@ -183,23 +136,13 @@ class File(GD):
     def getID(self):
         return self.entry.resource_id.text
 
-    def open(self, mode=None, buffering=None):
-        return self.fs.open_cache_file(self.getID(), mode=mode, buffering=buffering)
+    def open(self, **kwargs):
+        """ Opens the cached contents of this file. **kwargs is passed to the open function."""
+        return self.fs.open_cached_file(self.getID(), **kwargs)
 
     def write(self, stream, length, mime_type="text/plain"):
         self.fs.write(self.entry, stream, length, mime_type=mime_type)
 
 
-    def download(self):
-        extra_params = None
-        mime_type = self.entry.content.type
-#        if parent and mime_type != self.parent_mime_type:
-#            extra_params = {'exportFormat': "txt"}
-
+    def download(self, extra_params = None):
         self.fs.download(self.getID(), extra_params=extra_params)
-
-#        entry = self.client.GetDoc(item['file'], current_descriptor[etag])
-#        if extra_params is None:
-#            self.client.Download(entry, item_loc)
-#        else:
-#            self.client.Download(entry, item_loc, extra_params
