@@ -46,7 +46,7 @@ class GoogleDocs:
     def get_list(self, url):
         feed = self.client.GetResources(uri=url)
         if not feed.entry:
-            return []
+            return None
         if feed.GetNextLink():
             feed.entry += self.get_list(feed.GetNextLink().href).entry
         return feed
@@ -106,6 +106,7 @@ class Folder(GD):
     def list(self):
         feed = self.fs.get_list("%s/%s" % (self.entry.GetSelfLink().href, "contents"))
         toRet = []
+        if feed is None: return toRet
         for item in feed.entry:
             for category in item.category:
                 if category.term == folder_type:
