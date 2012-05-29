@@ -24,6 +24,6 @@ setup(name='gdata-utils',
       author='NigelB',
       author_email='nigel.blair+gdata-utils@gmail.com',
       url='http://github.com/nigelb/gdata-utils/',
-      packages=["gdata_utils", "gdata_utils.py"],
+      packages=["gdata_utils", "gdata_utils.fs"],
       requires=["simpleui", "gdata (>=2.0.16)"],
      )
