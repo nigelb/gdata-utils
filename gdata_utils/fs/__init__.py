@@ -46,7 +46,7 @@ class GoogleDocs:
     def get_list(self, url):
         feed = self.client.GetResources(uri=url)
         if not feed.entry:
-            raise Exception
+            return []
         if feed.GetNextLink():
             feed.entry += self.get_list(feed.GetNextLink().href).entry
         return feed
