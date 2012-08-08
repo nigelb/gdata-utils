@@ -20,31 +20,6 @@ from pprint import pprint
 import os
 
 
-class GoogleDocsConfigU(GoogleDocsConfigC):
-    """A Config file stored in Google Docs - creates the required DocsClient"""
-
-    def __init__(self, ui, service_name, file_title, mime_type="text/plain", folder=None):
-        from gdata.docs.client import DocsClient
-        self.service_name = service_name
-        client = DocsClient(source=service_name)
-        client.ssl = True
-
-        self.ui = ui
-        self.__authenticate(client)
-        GoogleDocsConfigC.__init__(self, client, service_name, file_title, mime_type=mime_type, folder=folder)
-        self.read()
-
-    def __authenticate(self, client):
-        from gdata.client import BadAuthentication
-        username, password = self.ui.get_credentials()
-        while True:
-            try:
-                client.ClientLogin(username, password, source=self.service_name)
-                break
-            except BadAuthentication, be:
-                username, password = self.ui.get_credentials(bad_credential=True)
-
-
 class GoogleDocsConfigC:
     """A Config file stored in Google Docs - created with an existing DocsClient"""
 
@@ -107,4 +82,29 @@ class GoogleDocsConfigC:
 
     def keys(self):
         return self.config.keys()
+
+
+class GoogleDocsConfigU(GoogleDocsConfigC):
+    """A Config file stored in Google Docs - creates the required DocsClient"""
+
+    def __init__(self, ui, service_name, file_title, mime_type="text/plain", folder=None):
+        from gdata.docs.client import DocsClient
+        self.service_name = service_name
+        client = DocsClient(source=service_name)
+        client.ssl = True
+
+        self.ui = ui
+        self.__authenticate(client)
+        GoogleDocsConfigC.__init__(self, client, service_name, file_title, mime_type=mime_type, folder=folder)
+        self.read()
+
+    def __authenticate(self, client):
+        from gdata.client import BadAuthentication
+        username, password = self.ui.get_credentials()
+        while True:
+            try:
+                client.ClientLogin(username, password, source=self.service_name)
+                break
+            except BadAuthentication, be:
+                username, password = self.ui.get_credentials(bad_credential=True)
 
