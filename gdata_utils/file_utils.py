@@ -95,7 +95,7 @@ class GoogleDocsConfigU(GoogleDocsConfigC):
 
         self.ui = ui
         self.__authenticate(client)
-        GoogleDocsConfigC.__init__(self, client, service_name, file_title, mime_type=mime_type, folder=folder)
+        GoogleDocsConfigC.__init__(self, client, file_title, mime_type=mime_type, folder=folder)
         self.read()
 
     def __authenticate(self, client):
