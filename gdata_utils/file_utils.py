@@ -47,7 +47,7 @@ class GoogleDocsConfigC:
 
     def write_config(self):
         from gdata.client import ResumableUploader
-        from gdata.docs.data import DocsEntry
+        from gdata.docs.data import Resource
 
         from atom.data import Title
         out = StringIO()
@@ -57,8 +57,8 @@ class GoogleDocsConfigC:
         out.close()
         out = StringIO(uni.encode("utf-8"))
         length = len(out.getvalue())
-        uploader = ResumableUploader(self.client, out, self.mime_type, length, chunk_size=length, desired_class=DocsEntry)
-        entry = DocsEntry(title=Title(text=self.file_title))
+        uploader = ResumableUploader(self.client, out, self.mime_type, length, chunk_size=length, desired_class=Resource)
+        entry = Resource(title=Title(text=self.file_title))
         if self.config_entry is None:
             self.config_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', entry=entry)
         else:
