@@ -42,7 +42,7 @@ class GoogleDocsConfigC:
         else:
             self.config_entry = feed.entry[0]
             a = {}
-            exec(self.client.GetFileContent(self.config_entry.content.src), a)
+            exec(self.client.DownloadResourceToMemory(self.config_entry), a)
             self.config = a['config']
 
     def write_config(self):
