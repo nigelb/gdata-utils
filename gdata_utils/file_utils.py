@@ -34,7 +34,7 @@ class GoogleDocsConfigC:
     def read(self):
         import gdata.docs.client as client
         feed = self.client.GetResources(
-                uri='%s?title=%s&title-exact=true&max-results=1' % (client.DOCLIST_FEED_URI, self.file_title))
+                uri='%s?title=%s&title-exact=true&max-results=1' % (client.RESOURCE_FEED_URI, self.file_title))
         if not feed.entry:
             self.config_entry = None
             self.config = {}
