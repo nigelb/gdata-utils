@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from StringIO import StringIO
+import json
 from pprint import pprint
 import os
 
@@ -41,21 +42,23 @@ class GoogleDocsConfigC:
             self.write_config()
         else:
             self.config_entry = feed.entry[0]
-            a = {}
-            exec(self.client.DownloadResourceToMemory(self.config_entry), a)
-            self.config = a['config']
+#            a = {}
+#            exec(self.client.DownloadResourceToMemory(self.config_entry), a)
+#            self.config = a['config']
+            self.config = json.loads(self.client.DownloadResourceToMemory(self.config_entry))
 
     def write_config(self):
         from gdata.client import ResumableUploader
         from gdata.docs.data import Resource
 
         from atom.data import Title
-        out = StringIO()
-        out.write("config=")
-        pprint(self.config, out, 4)
-        uni = unicode(out.getvalue())
-        out.close()
-        out = StringIO(uni.encode("utf-8"))
+#        out = StringIO()
+#        out.write("config=")
+#        pprint(self.config, out, 4)
+#        uni = unicode(out.getvalue())
+#        out.close()
+#        out = StringIO(uni.encode("utf-8"))
+        out = StringIO(json.dumps(self.config).encode("utf-8"))
         length = len(out.getvalue())
         uploader = ResumableUploader(self.client, out, self.mime_type, length, chunk_size=length, desired_class=Resource)
         entry = Resource(title=Title(text=self.file_title))
