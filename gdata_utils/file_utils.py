@@ -65,7 +65,9 @@ class GoogleDocsConfigC:
         if self.config_entry is None:
             self.config_entry = uploader.UploadFile('/feeds/upload/create-session/default/private/full', entry=entry)
         else:
-             self.config_entry = uploader.UpdateFile(self.config_entry.get_link("http://schemas.google.com/g/2005#resumable-edit-media").href, force=True)
+#             self.config_entry = uploader.UpdateFile(self.config_entry.get_link("http://schemas.google.com/g/2005#resumable-edit-media").href, force=True)
+            uploader = ResumableUploader(self.client, out, "application/octet-stream", length, chunk_size=length)
+            self.config_entry = uploader.UpdateFile(self.config_entry, force=True)
 
     def get(self, key):
         return self.config[key]
